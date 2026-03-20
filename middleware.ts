@@ -1,46 +1,77 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
 
-// This is a MOCK middleware representing international security standards
-// In a real app, this would verify Supabase JWTs and roles.
-export function middleware(request: NextRequest) {
-    const { pathname } = request.nextUrl;
+export async function middleware(request: NextRequest) {
+    let response = NextResponse.next({
+        request: {
+            headers: request.headers,
+        },
+    });
 
-    // 1. Allow public assets and landing page
-    if (
-        pathname === '/' ||
-        pathname.startsWith('/_next') ||
-        pathname.startsWith('/brand') ||
-        pathname === '/login' ||
-        pathname === '/favicon.ico'
-    ) {
-        return NextResponse.next();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321', // Placeholder if not set
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy_key',
+        {
+            cookies: {
+                get(name: string) {
+                    return request.cookies.get(name)?.value;
+                },
+                set(name: string, value: string, options: CookieOptions) {
+                    request.cookies.set({
+                        name,
+                        value,
+                        ...options,
+                    });
+                    response = NextResponse.next({
+                        request: {
+                            headers: request.headers,
+                        },
+                    });
+                    response.cookies.set({
+                        name,
+                        value,
+                        ...options,
+                    });
+                },
+                remove(name: string, options: CookieOptions) {
+                    request.cookies.set({
+                        name,
+                        value: '',
+                        ...options,
+                    });
+                    response = NextResponse.next({
+                        request: {
+                            headers: request.headers,
+                        },
+                    });
+                    response.cookies.set({
+                        name,
+                        value: '',
+                        ...options,
+                    });
+                },
+            },
+        }
+    );
+
+    // Verificación de sesión real
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Protección de rutas del Dashboard
+    if (request.nextUrl.pathname.startsWith('/dashboard')) {
+        if (!user) {
+            return NextResponse.redirect(new URL('/login', request.url));
+        }
     }
 
-    // 2. Mock Authentication Check
-    // In production, we check for 'sb-access-token' or similar auth cookie
-    const isAuthenticated = request.cookies.has('quevelug-auth-mock');
-
-    if (!isAuthenticated && pathname !== '/login') {
-        // Redirect to login if trying to access protected routes without auth
-        return NextResponse.redirect(new URL('/login', request.url));
+    // Redirección si ya está logueado
+    if (request.nextUrl.pathname === '/login' && user) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
-    // 3. Simple Role Enforcement Mock
-    // Logic: 
-    // /reporting -> Directors/Supervisors only
-    // /monitoring -> All except guards
-    // /guards -> Guards only
-
-    // (In a real scenario, we would decode the JWT to get the user role)
-
-    return NextResponse.next();
+    return response;
 }
 
 export const config = {
-    matcher: [
-        '/monitoring/:path*',
-        '/guards/:path*',
-        '/reporting/:path*',
-    ],
+    matcher: ['/dashboard/:path*', '/login'],
 };

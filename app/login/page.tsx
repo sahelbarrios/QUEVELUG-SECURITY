@@ -2,85 +2,104 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import Image from 'next/image';
 
 export default function LoginPage() {
-    const [email, setEmail] = useState('');
+    const [userId, setUserId] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
         setLoading(true);
 
-        // Simulate authentication and role-based redirect
-        setTimeout(() => {
-            // User requested credentials (Director Level)
-            if (email === '20389331' && password === '20.Gym..20') {
-                document.cookie = "quevelug-auth-mock=true; path=/";
-                router.push('/reporting');
+        try {
+            // Lógica inteligente: Si ya es un email, úsalo. Si es solo ID, añade el dominio corporativo.
+            const emailPlaceholder = userId.includes('@') ? userId : `${userId}@quevelug.com`;
+
+            console.log('Intentando enlace con:', emailPlaceholder); // Debug táctico
+
+            const { data, error: authError } = await supabase.auth.signInWithPassword({
+                email: emailPlaceholder,
+                password: password,
+            });
+
+            if (authError) throw authError;
+
+            if (data.user) {
+                // Redirección exitosa al panel de comando
+                router.push('/dashboard');
+                router.refresh();
             }
-            // Fallback for testing
-            else if (email.includes('director')) {
-                document.cookie = "quevelug-auth-mock=true; path=/";
-                router.push('/reporting'); // Directors go to full dashboard
-            } else if (email.includes('guard')) {
-                document.cookie = "quevelug-auth-mock=true; path=/";
-                router.push('/guards'); // Guards go to patrol app
-            } else {
-                alert('ERROR DE AUTENTICACIÓN: CREDENCIALES INVÁLIDAS');
-            }
+        } catch (err: any) {
+            setError('ERROR DE AUTENTICACIÓN: CREDENCIALES INVÁLIDAS O FALLO DE ENLACE');
+            console.error('Login error:', err.message);
+        } finally {
             setLoading(false);
-        }, 1500);
+        }
     };
 
     return (
         <div style={{
             minHeight: '100vh',
-            backgroundColor: 'var(--bg-deep)',
+            backgroundColor: '#030303',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '2rem',
-            fontFamily: 'var(--font-tactical)'
+            padding: '2rem'
         }}>
-            <div style={{
+            <div className="glass-panel" style={{
                 width: '100%',
-                maxWidth: '400px',
+                maxWidth: '450px',
                 padding: '3rem',
-                background: 'rgba(10,10,10,0.8)',
                 border: '1px solid #1a1a1a',
-                boxShadow: '0 0 40px rgba(0,0,0,0.5)'
+                textAlign: 'center'
             }}>
-                <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-                    <h1 className="font-display" style={{ fontSize: '1.5rem', letterSpacing: '0.3em', color: 'var(--gold-matte)', margin: 0 }}>QUEVELUG</h1>
-                    <span className="tag" style={{ fontSize: '0.6rem', marginTop: '0.5rem' }}>ACCESO TÁCTICO CENTRALIZADO</span>
+                {/* LOGO CORPORATIVO */}
+                <div style={{ position: 'relative', width: '200px', height: '80px', margin: '0 auto 2.5rem' }}>
+                    <Image
+                        src="/brand/logo.jpg"
+                        alt="QUEVELUG"
+                        fill
+                        style={{ objectFit: 'contain' }}
+                        priority
+                    />
                 </div>
 
+                <h2 className="font-display" style={{
+                    fontSize: '1rem',
+                    letterSpacing: '0.4em',
+                    color: 'var(--gold-matte)',
+                    marginBottom: '2.5rem'
+                }}>CONEXIÓN SEGURA</h2>
+
                 <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <div>
-                        <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-low)', marginBottom: '0.5rem', letterSpacing: '0.1rem' }}>IDENTIFICACIÓN / EMAIL</label>
+                    <div style={{ textAlign: 'left' }}>
+                        <label style={{ fontSize: '0.6rem', color: '#666', letterSpacing: '0.1em', display: 'block', marginBottom: '0.5rem' }}>IDENTIFICADOR OPERATIVO</label>
                         <input
                             type="text"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="agente_id@quevelug.com"
+                            value={userId}
+                            onChange={(e) => setUserId(e.target.value)}
+                            placeholder="XXXXXXXX"
                             style={{
                                 width: '100%',
                                 padding: '1rem',
-                                backgroundColor: 'rgba(255,255,255,0.03)',
-                                border: '1px solid #333',
+                                backgroundColor: 'rgba(255,255,255,0.02)',
+                                border: '1px solid #1a1a1a',
                                 color: 'white',
                                 fontSize: '0.9rem',
-                                outline: 'none',
-                                fontFamily: 'var(--font-tactical)'
+                                outline: 'none'
                             }}
                             required
                         />
                     </div>
 
-                    <div>
-                        <label style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-low)', marginBottom: '0.5rem', letterSpacing: '0.1rem' }}>CÓDIGO DE ACCESO</label>
+                    <div style={{ textAlign: 'left' }}>
+                        <label style={{ fontSize: '0.6rem', color: '#666', letterSpacing: '0.1em', display: 'block', marginBottom: '0.5rem' }}>CLAVE DE ACCESO ENCRIPTADA</label>
                         <input
                             type="password"
                             value={password}
@@ -89,41 +108,45 @@ export default function LoginPage() {
                             style={{
                                 width: '100%',
                                 padding: '1rem',
-                                backgroundColor: 'rgba(255,255,255,0.03)',
-                                border: '1px solid #333',
+                                backgroundColor: 'rgba(255,255,255,0.02)',
+                                border: '1px solid #1a1a1a',
                                 color: 'white',
                                 fontSize: '0.9rem',
-                                outline: 'none',
-                                fontFamily: 'var(--font-tactical)'
+                                outline: 'none'
                             }}
                             required
                         />
                     </div>
 
+                    {error && (
+                        <div style={{ color: '#ff4444', fontSize: '0.7rem', letterSpacing: '0.05em', backgroundColor: 'rgba(255,68,68,0.05)', padding: '0.5rem' }}>
+                            {error}
+                        </div>
+                    )}
+
                     <button
                         type="submit"
                         disabled={loading}
                         style={{
-                            padding: '1rem',
-                            backgroundColor: loading ? '#333' : 'var(--gold-matte)',
+                            marginTop: '1rem',
+                            padding: '1.2rem',
+                            backgroundColor: 'var(--gold-matte)',
                             color: 'white',
                             border: 'none',
-                            fontSize: '0.9rem',
-                            letterSpacing: '0.15rem',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            marginTop: '1rem',
-                            transition: 'background-color 0.2s',
-                            fontFamily: 'var(--font-tactical)'
+                            fontSize: '0.8rem',
+                            letterSpacing: '0.2em',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            transition: 'opacity 0.2s'
                         }}
                     >
-                        {loading ? 'AUTENTICANDO...' : 'INGRESAR AL SISTEMA'}
+                        {loading ? 'AUTENTICANDO...' : 'INICIAR ENLACE'}
                     </button>
                 </form>
 
-                <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.65rem', color: 'var(--text-low)' }}>
-                    PROTOCOLO DE SEGURIDAD AES-256 ACTIVO. <br />
-                    TODA ACTIVIDAD ESTÁ SIENDO MONITOREADA.
-                </div>
+                <footer style={{ marginTop: '3rem', fontSize: '0.55rem', color: '#333', letterSpacing: '0.2em' }}>
+                    PROTOCOL AES-256 | NIVEL DE SEGURIDAD ELITE
+                </footer>
             </div>
         </div>
     );
