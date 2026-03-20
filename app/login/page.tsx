@@ -15,12 +15,20 @@ export default function LoginPage() {
 
         // Simulate authentication and role-based redirect
         setTimeout(() => {
-            if (email.includes('director')) {
+            // User requested credentials (Director Level)
+            if (email === '20389331' && password === '20.Gym..20') {
+                document.cookie = "quevelug-auth-mock=true; path=/";
+                router.push('/reporting');
+            }
+            // Fallback for testing
+            else if (email.includes('director')) {
+                document.cookie = "quevelug-auth-mock=true; path=/";
                 router.push('/reporting'); // Directors go to full dashboard
             } else if (email.includes('guard')) {
+                document.cookie = "quevelug-auth-mock=true; path=/";
                 router.push('/guards'); // Guards go to patrol app
             } else {
-                router.push('/monitoring'); // Default to monitoring
+                alert('ERROR DE AUTENTICACIÓN: CREDENCIALES INVÁLIDAS');
             }
             setLoading(false);
         }, 1500);

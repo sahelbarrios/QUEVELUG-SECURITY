@@ -5,7 +5,7 @@
   --text-high: #F5F5F5;
   --text-mid: #999999;
   --text-low: #666666;
-  
+
   --background: var(--bg-deep);
   --foreground: var(--text-high);
 }
@@ -25,14 +25,20 @@ body {
 }
 
 /* Typography styles based on Brandbook */
-h1, h2, h3, h4, .font-display {
+h1,
+h2,
+h3,
+h4,
+.font-display {
   font-family: var(--font-display), serif;
   font-weight: 400;
   line-height: 1.05;
   letter-spacing: -0.02em;
 }
 
-p, .font-tactical, body {
+p,
+.font-tactical,
+body {
   font-family: var(--font-tactical), sans-serif;
   font-weight: 300;
   line-height: 1.8;
@@ -69,4 +75,35 @@ p {
   height: 1px;
   background-color: var(--gold-matte);
   margin: 2rem 0;
+}
+
+.glass-panel {
+  background: rgba(10, 10, 10, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-card {
+  background: rgba(20, 20, 20, 0.4);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(197, 160, 89, 0.1);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: var(--gold-matte);
+  background: rgba(197, 160, 89, 0.05);
+}
+
+.tactical-glow {
+  box-shadow: 0 0 15px rgba(197, 160, 89, 0.2);
+}
+
+.hud-text {
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 0.7rem;
+  color: var(--text-mid);
 }
